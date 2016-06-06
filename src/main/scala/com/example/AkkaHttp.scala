@@ -3,6 +3,7 @@ package com.example
 import akka.actor.ActorSystem
 import akka.event.Logging
 import akka.http.scaladsl.Http
+import akka.http.scaladsl.model.HttpRequest
 import akka.http.scaladsl.server.Directives._
 import akka.stream.ActorMaterializer
 import com.typesafe.config.ConfigFactory
@@ -17,10 +18,9 @@ object AkkaHttp extends App {
 
   val route = path("") {
     get {
-      complete("ok")
+      handleWith((a: HttpRequest) => s"your request is\n\n${a.headers.mkString("\n")}")
     }
   }
-
 
   Http().bindAndHandle(route, config.getString("http.interface"), config.getInt("http.port"))
 }

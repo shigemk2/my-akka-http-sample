@@ -3,35 +3,35 @@ package com.example
 import akka.actor.ActorSystem
 import akka.event.Logging
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.model.HttpMethods._
+import akka.http.scaladsl.model._
 import akka.stream.ActorMaterializer
 import com.typesafe.config.ConfigFactory
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import akka.http.scaladsl.model.{HttpHeader, HttpRequest}
-import spray.json.DefaultJsonProtocol._
 
 object AkkaHttp extends App {
   implicit val system = ActorSystem()
   implicit val executor = system.dispatcher
   implicit val materializer = ActorMaterializer()
 
-  case class HelloRequest(method: String, uri: String, headers: String, entity: String, protocol: String)
-  case class HelloResponse(message: String)
-
-  implicit val helloRequestProtocol = jsonFormat5(HelloRequest)
-  implicit val helloReponseProtocol = jsonFormat1(HelloResponse)
-
   val config = ConfigFactory.load()
   val logger = Logging(system, getClass)
 
 
-  val route = path("") {
-    get {
-      handleWith((a: HttpRequest) => {
-        HelloRequest(a.method.toString(), a.uri.toString, a.headers.toString, a.entity.toString, a.protocol.toString)
-      })
-    }
+  val requestHandler: HttpRequest => HttpResponse = {
+    case HttpRequest(GET, Uri.Path("/"), _, _, _) =>
+      HttpResponse(entity = HttpEntity(
+        ContentTypes.`text/html(UTF-8)`,
+        "<html><body>Hello world!</body></html>"))
+
+    case HttpRequest(GET, Uri.Path("/ping"), _, _, _) =>
+      HttpResponse(entity = "PONG!")
+
+    case HttpRequest(GET, Uri.Path("/crash"), _, _, _) =>
+      sys.error("BOOM!")
+
+    case _: HttpRequest =>
+      HttpResponse(404, entity = "Unknown resource!")
   }
 
-  Http().bindAndHandle(route, config.getString("http.interface"), config.getInt("http.port"))
+  Http().bindAndHandleSync(requestHandler, config.getString("http.interface"), config.getInt("http.port"))
 }

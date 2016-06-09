@@ -3,8 +3,8 @@ package com.example
 import akka.actor.ActorSystem
 import akka.event.Logging
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.server.Directives
 import akka.stream.ActorMaterializer
+import akka.http.scaladsl.server._
 import com.typesafe.config.ConfigFactory
 
 object AkkaHttp extends App {

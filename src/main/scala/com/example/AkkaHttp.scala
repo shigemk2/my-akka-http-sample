@@ -9,30 +9,9 @@ import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
 import akka.http.scaladsl.server._
 
-import com.amazonaws.auth.{AWSCredentialsProvider, BasicAWSCredentials}
-import com.amazonaws.internal.StaticCredentialsProvider
-import com.amazonaws.regions.{Region, Regions}
 import com.amazonaws.services.kinesis.model.{PutRecordRequest, PutRecordResult}
-import com.amazonaws.services.kinesis.{AmazonKinesis, AmazonKinesisClient}
 import com.typesafe.config.ConfigFactory
-import org.apache.commons.lang.RandomStringUtils
 
-trait Kinesis {
-  val accessKeyId = System.getProperty("accessKeyId")
-  val secretAccessKey = System.getProperty("secretAccessKey")
-
-  val appName = "kinesis-test-app"
-  val streamName = "kinesis-test-stream"
-
-  val initialPosition = "LATEST"
-  val region = "ap-northeast-1"
-  val credentialsProvider: AWSCredentialsProvider = new StaticCredentialsProvider(new BasicAWSCredentials(accessKeyId, secretAccessKey))
-
-  val kinesis: AmazonKinesis = new AmazonKinesisClient(credentialsProvider)
-  kinesis.setRegion(Region.getRegion(Regions.AP_NORTHEAST_1))
-
-  def put(key: String, value: String): PutRecordResult
-}
 object AkkaHttp extends App with Kinesis {
   implicit val system = ActorSystem()
   implicit val executor = system.dispatcher

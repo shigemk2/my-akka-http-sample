@@ -31,7 +31,7 @@ trait Kinesis {
   val kinesis: AmazonKinesis = new AmazonKinesisClient(credentialsProvider)
   kinesis.setRegion(Region.getRegion(Regions.AP_NORTHEAST_1))
 
-  def put(data: String): PutRecordResult
+  def put(key: String, value: String): PutRecordResult
 }
 object AkkaHttp extends App with Kinesis {
   implicit val system = ActorSystem()
@@ -44,22 +44,20 @@ object AkkaHttp extends App with Kinesis {
   import Directives._
 
   val route =
-    parameters('color, 'backgroundColor) { (color, backgroundColor) =>
-      val data: String = s"The color is '$color' and the background is '$backgroundColor'"
-      put(data)
-      complete(data)
+    parameters('key, 'value) { (key, value) =>
+      put(key, value)
+      complete(s"key: ${key}, value: ${value}")
     }
 
   val bindingFuture = Http().bindAndHandle(route, config.getString("http.interface"), config.getInt("http.port"))
 
-  override def put(data: String): PutRecordResult = {
-    val key = RandomStringUtils.randomAlphanumeric(10)
+  override def put(key: String, value: String): PutRecordResult = {
     val request: PutRecordRequest = new PutRecordRequest()
     request.setStreamName(streamName)
-    request.setData(ByteBuffer.wrap(data.getBytes("UTF-8")))
+    request.setData(ByteBuffer.wrap(value.getBytes("UTF-8")))
     request.setPartitionKey(key)
     val putRecord: PutRecordResult = kinesis.putRecord(request)
-    println(s"key:${key} ,record:${data}, ${putRecord}")
+    println(s"key:${key} ,record:${value}, ${putRecord}")
     println("--------")
     kinesis.putRecord(request)
   }

@@ -24,7 +24,10 @@ object AkkaHttp extends App with Kinesis {
 
   import Directives._
 
-  val route =
+  val route: Route =
+    path("order" / IntNumber) { id =>
+      complete(id.toString)
+    } ~
     parameters('key, 'value) { (key, value) =>
       if(accessKeyId.isDefined && secretAccessKey.isDefined) {
         put(key, value)
